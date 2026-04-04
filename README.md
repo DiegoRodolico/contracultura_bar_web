@@ -64,9 +64,13 @@ python manage.py createsuperuser
 7. Levantar servidor:
 python manage.py runserver
 
-👨‍💻 Autor
+---
+
+##  👨‍💻 Autor
 Diego Rodolico
 GitHub: https://github.com/DiegoRodolico
 
-📄 Licencia
+---
+
+##  📄 Licencia
 Uso libre para aprendizaje y desarrollo personal.
