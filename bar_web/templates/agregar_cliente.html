@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+
+{% block header %}Agregar Cliente{% endblock %}
+
+{% block extra_css %}{% endblock %}
+
+{% block extra_js %}{% endblock %}
+
+{%block content%}
+
+<div class="card">
+    <div class="card-header">Agregar Cliente</div>
+    <div class="card-body">
+        <h4 class="card-title">Datos del Cliente: </h4>
+        {% include 'form_cliente.html' %}
+    </div>
+    <div class="card-footer text-muted"></div>
+</div>
+
+
+
+{% endblock %}

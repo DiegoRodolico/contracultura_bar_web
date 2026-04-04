@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% block header %}Mesas{% endblock %}
+
+{% block extra_css %}{% endblock %}
+
+{% block extra_js %}{% endblock %}
+
+{%block content%}
+Disponibilidad de Mesas:
+    <h1>
+
+        {% if mesas_libres >= 8 %}
+                💡 Hay buena disponibilidad de mesas
+        {% elif mesas_libres >= 3 %}
+                ⚠️  Disponibilidad media, considerar reservas
+        {% else %}
+                🚨 Poca disponibilidad, sugerir barra o espera
+        {% endif %}
+    </h1>
+    <a
+        name="btn_mostrar_mesas"
+        id="btn_mostrar_mesas"
+        class="btn btn-primary"
+        href="{% url 'mostrar_mesas' %}"
+        role="button"
+        >Mostrar Mesas </a
+    >
+    
+{% endblock %}

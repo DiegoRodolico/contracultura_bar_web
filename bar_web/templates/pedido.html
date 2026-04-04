@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+
+{% block header %}Pedidos{% endblock %}
+
+{% block extra_css %}{% endblock %}
+
+{% block extra_js %}{% endblock %}
+
+{%block content%}
+<a
+    name="btn_generar_pedido"
+    id="btn_generar_pedido"
+    class="btn btn-primary"
+    href="{% url 'generar_pedido' %}"
+    role="button"
+    >Generar Pedido</a
+>
+{% for p in pedidos %}
+    <div class="card mb-3">
+        <div class="card-body">
+            <h5 class="card-title">Pedido: {{ p.id }}</h5>
+            <p>Mesa {{ p.mesa }}</p>
+            <p>Cliente: {{ p.cliente }}</p>
+            <p>Estado: {{ p.estado }}</p>
+            <p>Tipo: {{ p.tipo }}</p>
+            <p>Total: {{ p.total }}</p>
+            <p>Observaciones: {{ p.observaciones }}</p>
+            <p>Fecha de Creacion: {{ p.fecha_creacion }}</p>
+
+        </div>
+    </div>
+{% endfor %}
+
+
+{% endblock %}

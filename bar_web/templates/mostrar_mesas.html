@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% block header %}Mostrar Mesas{% endblock %}
+
+{% block extra_css %}{% endblock %}
+
+{% block extra_js %}{% endblock %}
+
+{% block content %}
+    {% if mesas %}
+        {% for m in mesas %}
+            <div class="card mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">Mesa {{ m.numero }}</h5>
+                    <p>Capacidad: {{ m.capacidad }}</p>
+                    <p>Ocupación: {{ m.estado|yesno:"Libre,Ocupada" }}</p>
+                </div>
+            </div>
+        {% endfor %}
+    {% else %}
+        <p>No hay mesas registradas.</p>
+    {% endif %}
+
+    <div class="mesas_libres_mostrar">
+        Mesas libres: {{ mesas_libres }}
+    </div>
+{% endblock %}

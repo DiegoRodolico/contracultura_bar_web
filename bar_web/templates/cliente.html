@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block header %}Clientes{% endblock %}
+
+{% block extra_css %}{% endblock %}
+
+{% block extra_js %}{% endblock %}
+
+{%block content%}
+<a
+    name="btn_agregar_cliente"
+    id="btn_agregar_cliente"
+    class="btn btn-primary"
+    href="{% url 'agregar_cliente' %}"
+    role="button"
+    
+    >Agregar Cliente</a
+>
+
+{% for c in cliente %}
+    <div class="card mb-3">
+        <div class="card-body">
+            <h5 class="card-title">Nombre {{ c.nombre }}</h5>
+            <p>Telefono: {{ c.telefono }}</p>
+            <p>Puntos: {{ c.puntos }}</p>
+        </div>
+    </div>
+{% endfor %}
+
+{% endblock %}
+
