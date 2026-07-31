@@ -51,8 +51,9 @@ python manage.py createsuperuser
 python manage.py runserver
 ```
 * Abrir en el navegador:
-  - App: http://127.0.0.1:8000/
-  - Admin: http://127.0.0.1:8000/admin/
+- App: http://127.0.0.1:8000/
+- Admin: http://127.0.0.1:8000/admin/
+
 📋 Estado actual del proyecto
 ✅ Base de datos SQLite funcionando, esquema migrado.
 ⚠️ La base se crea vacía: no trae categorías, productos ni mesas de ejemplo. Para probar la app hay que cargar datos manualmente desde /admin (Categorías, Productos, Mesas) o armando un fixture/script de carga inicial.
