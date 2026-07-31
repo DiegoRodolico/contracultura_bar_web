@@ -13,7 +13,7 @@
                 <div class="card-body">
                     <h5 class="card-title">Mesa {{ m.numero }}</h5>
                     <p>Capacidad: {{ m.capacidad }}</p>
-                    <p>Ocupación: {{ m.estado|yesno:"Libre,Ocupada" }}</p>
+                    <p>Estado: {{ m.estado }}</p>
                 </div>
             </div>
         {% endfor %}
