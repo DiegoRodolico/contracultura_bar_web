@@ -47,7 +47,9 @@ def pedido(request):
 def generar_pedido(request):
     formulario_pedido = pedidoForm(request.POST or None, request.FILES or None)
     if formulario_pedido.is_valid():
-        formulario_pedido.save()
+        detalle = formulario_pedido.save(commit=False)
+        detalle.precio_unitario = detalle.producto.precio
+        detalle.subtotal = detalle.precio_unitario * detalle.cantidad
         return redirect('pedido')
     return render(request, 'generar_pedido.html', {'formulario_pedido': formulario_pedido})
 

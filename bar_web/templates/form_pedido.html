@@ -4,10 +4,10 @@
 <div class="mb-3">
     <label for="" class="form-label">{{ campo.label }}</label>
     <input
-        type="{{ campo.field.widget.input_type }}"
+        type="{{ campo }}"
         class="form-control"
         name="{{ campo.name }}"
-        id=""
+        id="{{ campo.id_for_label }}"
         aria-describedby="helpId"
         placeholder="{{ campo.label }}"
     />

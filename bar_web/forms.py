@@ -9,6 +9,6 @@ class clienteForm (forms.ModelForm):
 class pedidoForm (forms.ModelForm):
     class Meta:
         model = DetallePedido
-        fields = ['producto', 'cantidad', 'precio_unitario', 'subtotal']
+        fields = ['pedido', 'producto', 'cantidad', 'precio_unitario', 'subtotal']
 
     
