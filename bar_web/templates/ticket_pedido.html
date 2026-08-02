@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+
+{% block header %}Pedido #{{ pedido.id }}{% endblock %}
+
+{% block extra_css %}{% endblock %}
+
+{% block extra_js %}{% endblock %}
+
+{% block content %}
+<div class="card mb-3">
+    <div class="card-header">
+        Pedido #{{ pedido.id }} — {{ pedido.tipo }}
+        {% if pedido.mesa %} — Mesa {{ pedido.mesa.numero }}{% endif %}
+        {% if pedido.cliente %} — Cliente: {{ pedido.cliente.nombre }}{% endif %}
+    </div>
+    <div class="card-body">
+
+        {% if detalles %}
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Producto</th>
+                    <th>Cantidad</th>
+                    <th>Precio unitario</th>
+                    <th>Subtotal</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for d in detalles %}
+                <tr>
+                    <td>{{ d.producto.nombre }}</td>
+                    <td>{{ d.cantidad }}</td>
+                    <td>{{ d.precio_unitario }}</td>
+                    <td>{{ d.subtotal }}</td>
+                    <td>
+                        <a href="{% url 'editar_detalle' d.id %}" class="btn btn-sm btn-secondary">Editar</a>
+                        <a href="{% url 'eliminar_detalle' d.id %}" class="btn btn-sm btn-danger">Eliminar</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p>Todavía no se cargaron productos en este pedido.</p>
+        {% endif %}
+
+        <h5>Total: {{ pedido.total }}</h5>
+    </div>
+</div>
+
+<div class="card mb-3">
+    <div class="card-header">Agregar producto</div>
+    <div class="card-body">
+        <form method="post">
+            {% csrf_token %}
+            {% for campo in formulario_pedido %}
+            <div class="mb-3">
+                <label for="{{ campo.id_for_label }}" class="form-label">{{ campo.label }}</label>
+                {{ campo }}
+                {% if campo.errors %}
+                    <div class="text-danger small">{{ campo.errors }}</div>
+                {% endif %}
+            </div>
+            {% endfor %}
+            <input class="btn btn-primary" type="submit" value="Agregar al pedido" />
+        </form>
+    </div>
+</div>
+
+<a href="{% url 'cerrar_pedido' pedido.id %}" class="btn btn-success">Cerrar Pedido</a>
+<a href="{% url 'pedido' %}" class="btn btn-outline-secondary">Volver a Pedidos</a>
+
+{% endblock %}

@@ -8,12 +8,12 @@
 
 {%block content%}
 <a
-    name="btn_generar_pedido"
-    id="btn_generar_pedido"
+    name="btn_iniciar_pedido"
+    id="btn_iniciar_pedido"
     class="btn btn-primary"
-    href="{% url 'generar_pedido' %}"
+    href="{% url 'iniciar_pedido' %}"
     role="button"
-    >Generar Pedido</a
+    >Nuevo Pedido</a
 >
 {% for p in pedidos %}
     <div class="card mb-3">
@@ -27,6 +27,11 @@
             <p>Observaciones: {{ p.observaciones }}</p>
             <p>Fecha de Creacion: {{ p.fecha_creacion }}</p>
 
+            {% if not p.fecha_cierre %}
+                <a href="{% url 'ticket_pedido' p.id %}" class="btn btn-sm btn-outline-primary">Ver / Agregar productos</a>
+            {% else %}
+                <span class="badge bg-secondary">Cerrado</span>
+            {% endif %}
         </div>
     </div>
 {% endfor %}
