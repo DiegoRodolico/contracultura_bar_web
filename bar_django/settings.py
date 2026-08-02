@@ -75,12 +75,8 @@ WSGI_APPLICATION = 'bar_django.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'contracultura_bar',
-        'USER': 'root',
-        'PASSWORD': 'casla1908',
-        'HOST': 'localhost',
-        'PORT': '3306'
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
 
