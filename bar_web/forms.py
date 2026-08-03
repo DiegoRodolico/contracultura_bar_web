@@ -24,7 +24,19 @@ class pedidoForm(forms.ModelForm):
         model = DetallePedido
         fields = ['producto', 'cantidad']
 
+    def clean_cantidad(self):
+        cantidad = self.cleaned_data['cantidad']
+        if cantidad <= 0:
+            raise forms.ValidationError('La cantidad debe ser mayor a 0.')
+        return cantidad
+
 class editarDetalleForm(forms.ModelForm):
     class Meta:
         model = DetallePedido
-        fields = ['cantidad']  
+        fields = ['cantidad']
+
+    def clean_cantidad(self):
+        cantidad = self.cleaned_data['cantidad']
+        if cantidad <= 0:
+            raise forms.ValidationError('La cantidad debe ser mayor a 0.')
+        return cantidad  

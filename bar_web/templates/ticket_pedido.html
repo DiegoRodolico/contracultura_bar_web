@@ -49,6 +49,10 @@
     </div>
 </div>
 
+{% if error_stock %}
+    <div class="alert alert-danger">{{ error_stock }}</div>
+{% endif %}
+
 <div class="card mb-3">
     <div class="card-header">Agregar producto</div>
     <div class="card-body">
@@ -67,6 +71,8 @@
         </form>
     </div>
 </div>
+
+
 
 <a href="{% url 'cerrar_pedido' pedido.id %}" class="btn btn-success">Cerrar Pedido</a>
 <a href="{% url 'pedido' %}" class="btn btn-outline-secondary">Volver a Pedidos</a>

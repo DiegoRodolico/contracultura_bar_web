@@ -69,31 +69,45 @@ def iniciar_pedido(request):
 def ticket_pedido(request, pedido_id):
     pedido_actual = get_object_or_404(Pedidos, id=pedido_id)
     formulario_pedido = pedidoForm(request.POST or None)
+    error_stock = None
 
     if request.method == 'POST' and formulario_pedido.is_valid():
         detalle = formulario_pedido.save(commit=False)
-        detalle.pedido = pedido_actual
-        detalle.precio_unitario = detalle.producto.precio
-        detalle.subtotal = detalle.precio_unitario * detalle.cantidad
-        detalle.save()
+        producto = detalle.producto
+        if producto.stock < detalle.cantidad :
+            error_stock = f"Stock insuficiente de {producto.nombre} (disponible: {producto.stock})"
+        else:
+            producto.stock -= detalle.cantidad
+            producto.save()
+            detalle.pedido = pedido_actual
+            detalle.precio_unitario = detalle.producto.precio
+            detalle.subtotal = detalle.precio_unitario * detalle.cantidad
+            detalle.save()
 
-        recalcular_total(pedido_actual)
-        return redirect('ticket_pedido', pedido_id=pedido_actual.id)
+            recalcular_total(pedido_actual)
+            return redirect('ticket_pedido', pedido_id=pedido_actual.id)
 
     detalles = pedido_actual.detallepedido_set.all()
     return render(request, 'ticket_pedido.html', {
         'pedido': pedido_actual,
         'detalles': detalles,
         'formulario_pedido': formulario_pedido,
+        'error_stock': error_stock,
     })
 
 
 def editar_detalle(request, detalle_id):
     detalle = get_object_or_404(DetallePedido, id=detalle_id)
     formulario_editar = editarDetalleForm(request.POST or None, instance=detalle)
+    cantidad_anterior = detalle.cantidad
 
     if formulario_editar.is_valid():
         detalle_editado = formulario_editar.save(commit=False)
+        cantidad_nueva = detalle_editado.cantidad
+        diferencia = cantidad_nueva - cantidad_anterior
+        producto = detalle_editado.producto
+        producto.stock -= diferencia
+        producto.save()
         detalle_editado.subtotal = detalle_editado.precio_unitario * detalle_editado.cantidad
         detalle_editado.save()
 
@@ -109,6 +123,10 @@ def editar_detalle(request, detalle_id):
 def eliminar_detalle(request, detalle_id):
     detalle = get_object_or_404(DetallePedido, id=detalle_id)
     pedido_id = detalle.pedido.id
+    producto = detalle.producto
+    producto.stock += detalle.cantidad
+    producto.save()
+
     detalle.delete()
 
     recalcular_total(get_object_or_404(Pedidos, id=pedido_id))
