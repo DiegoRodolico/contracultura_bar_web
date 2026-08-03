@@ -1,0 +1,158 @@
+{% extends 'base.html' %}
+
+{% block title %}Reponer stock - {{ producto.nombre }}{% endblock %}
+
+{% block header %}Reponer stock{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+
+    <div class="mb-3">
+        <a href="{% url 'stock_critico' %}" class="btn btn-outline-secondary btn-sm">
+            &larr; Volver al listado
+        </a>
+    </div>
+
+    <div class="row g-3">
+        <div class="col-md-5">
+            <div class="card shadow-sm">
+                <div class="card-header bg-white">
+                    <strong>Producto</strong>
+                </div>
+                <div class="card-body">
+                    <h4 class="mb-2">{{ producto.nombre }}</h4>
+
+                    {% if producto.categoria %}
+                        <div class="text-muted mb-3">
+                            {{ producto.categoria.nombre }} {{ producto.categoria.icono }}
+                        </div>
+                    {% endif %}
+
+                    {% if producto.descripcion %}
+                        <p class="text-muted">{{ producto.descripcion }}</p>
+                    {% endif %}
+
+                    <table class="table table-sm mb-0">
+                        <tbody>
+                            <tr>
+                                <th class="text-muted" style="width: 50%;">Stock actual</th>
+                                <td>
+                                    <span class="badge bg-{{ nivel_color }} fs-6">
+                                        {{ stock_anterior|default_if_none:"0" }}
+                                    </span>
+                                    <span class="text-muted small ms-1">({{ nivel_label }})</span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th class="text-muted">Stock mínimo</th>
+                                <td>{{ producto.stock_minimo|default_if_none:"0" }}</td>
+                            </tr>
+                            <tr>
+                                <th class="text-muted">Precio</th>
+                                <td>${{ producto.precio }}</td>
+                            </tr>
+                            <tr>
+                                <th class="text-muted">Costo</th>
+                                <td>${{ producto.costo }}</td>
+                            </tr>
+                            {% if not producto.activo %}
+                            <tr>
+                                <td colspan="2">
+                                    <span class="badge bg-secondary">Producto inactivo</span>
+                                </td>
+                            </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-7">
+            <div class="card shadow-sm">
+                <div class="card-header bg-white">
+                    <strong>Reponer stock</strong>
+                </div>
+                <div class="card-body">
+                    <form method="post" novalidate>
+                        {% csrf_token %}
+                        {% if next_url %}
+                            <input type="hidden" name="next" value="{{ next_url }}">
+                        {% endif %}
+
+                        {% if form.non_field_errors %}
+                            <div class="alert alert-danger">
+                                {{ form.non_field_errors }}
+                            </div>
+                        {% endif %}
+
+                        <div class="mb-3">
+                            <label for="{{ form.cantidad.id_for_label }}" class="form-label">
+                                {{ form.cantidad.label }}
+                            </label>
+                            {{ form.cantidad }}
+                            {% if form.cantidad.help_text %}
+                                <div class="form-text">{{ form.cantidad.help_text }}</div>
+                            {% endif %}
+                            {% if form.cantidad.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.cantidad.errors|join:", " }}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.nuevo_stock_minimo.id_for_label }}" class="form-label">
+                                {{ form.nuevo_stock_minimo.label }}
+                            </label>
+                            {{ form.nuevo_stock_minimo }}
+                            {% if form.nuevo_stock_minimo.help_text %}
+                                <div class="form-text">{{ form.nuevo_stock_minimo.help_text }}</div>
+                            {% endif %}
+                            {% if form.nuevo_stock_minimo.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.nuevo_stock_minimo.errors|join:", " }}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="alert alert-info py-2 mb-3">
+                            <small>
+                                Al confirmar, el stock pasará de
+                                <strong>{{ stock_anterior|default_if_none:"0" }}</strong> a
+                                <strong id="stock_resultante">{{ stock_anterior|default_if_none:"0" }}</strong>.
+                            </small>
+                        </div>
+
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                Confirmar reposición
+                            </button>
+                            <a href="{% url 'stock_critico' %}" class="btn btn-outline-secondary">
+                                Cancelar
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    (function() {
+        const input = document.getElementById('{{ form.cantidad.id_for_label }}');
+        const out = document.getElementById('stock_resultante');
+        const base = {{ stock_anterior|default_if_none:0 }};
+        if (input && out) {
+            input.addEventListener('input', () => {
+                const n = parseInt(input.value, 10);
+                out.textContent = (isNaN(n) || n < 0) ? base : (base + n);
+            });
+        }
+    })();
+</script>
+{% endblock %}

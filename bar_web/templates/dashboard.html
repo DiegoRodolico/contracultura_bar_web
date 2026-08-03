@@ -1,0 +1,189 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard - Contracultura Bar{% endblock %}
+
+{% block header %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="card shadow-sm h-100">
+                <div class="card-body">
+                    <div class="text-muted small">Pedidos abiertos hoy</div>
+                    <div class="display-6 fw-bold text-primary">{{ pedidos_abiertos_count }}</div>
+                    <a href="/pedido" class="small">Ver pedidos &rarr;</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow-sm h-100">
+                <div class="card-body">
+                    <div class="text-muted small">Facturado hoy</div>
+                    <div class="display-6 fw-bold text-success">${{ total_facturado_hoy }}</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow-sm h-100">
+                <div class="card-body">
+                    <div class="text-muted small">Mesas ocupadas / libres</div>
+                    <div class="display-6 fw-bold text-warning">
+                        {{ mesas_ocupadas_count }} <span class="text-muted fs-5">/ {{ mesas_libres_count }}</span>
+                    </div>
+                    <a href="/mesas" class="small">Ver mesas &rarr;</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow-sm h-100">
+                <div class="card-body">
+                    <div class="text-muted small">Stock crítico</div>
+                    <div class="display-6 fw-bold text-danger">{{ stock_critico_count }}</div>
+                    <a href="{% url 'stock_critico' %}" class="small">Ver detalle &rarr;</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-md-12">
+            <div class="d-flex flex-wrap gap-2">
+                <a href="/iniciar_pedido" class="btn btn-primary">
+                    + Nuevo pedido
+                </a>
+                <a href="/producto" class="btn btn-outline-secondary">
+                    Productos
+                </a>
+                <a href="{% url 'reponer' %}" class="btn btn-outline-secondary">
+                    Reponer stock
+                </a>
+                <a href="/cliente" class="btn btn-outline-secondary">
+                    Clientes
+                </a>
+                <a href="/mesas" class="btn btn-outline-secondary">
+                    Mesas
+                </a>
+                <a href="/pedido" class="btn btn-outline-secondary">
+                    Pedidos
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-3">
+        <div class="col-md-7">
+            <div class="card shadow-sm">
+                <div class="card-header bg-white">
+                    <strong>Últimos pedidos</strong>
+                </div>
+                <div class="card-body p-0">
+                    {% if ultimos_pedidos %}
+                    <table class="table table-sm mb-0">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Tipo</th>
+                                <th>Mesa</th>
+                                <th>Cliente</th>
+                                <th>Estado</th>
+                                <th class="text-end">Total</th>
+                                <th>Fecha</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for p in ultimos_pedidos %}
+                            <tr>
+                                <td>{{ p.id }}</td>
+                                <td>{{ p.get_tipo_display }}</td>
+                                <td>{{ p.mesa|default:"-" }}</td>
+                                <td>{{ p.cliente|default:"-" }}</td>
+                                <td>
+                                    {% if p.estado == 'ENTREGADO' %}
+                                        <span class="badge bg-success">Entregado</span>
+                                    {% elif p.estado == 'CANCELADO' %}
+                                        <span class="badge bg-secondary">Cancelado</span>
+                                    {% elif p.estado == 'LISTO' %}
+                                        <span class="badge bg-info">Listo</span>
+                                    {% elif p.estado == 'PREPARANDO' %}
+                                        <span class="badge bg-warning text-dark">Preparando</span>
+                                    {% else %}
+                                        <span class="badge bg-primary">Pendiente</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-end">${{ p.total|default_if_none:"0" }}</td>
+                                <td class="small text-muted">{{ p.fecha_creacion|date:"d/m H:i" }}</td>
+                                <td>
+                                    <a href="{% url 'ticket_pedido' p.id %}" class="btn btn-sm btn-outline-primary">Ver</a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    {% else %}
+                    <div class="p-4 text-muted text-center">
+                        Todavía no hay pedidos cargados.
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-5">
+            <div class="card shadow-sm">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                    <strong>Stock crítico</strong>
+                    <div>
+                        <a href="{% url 'stock_critico' %}" class="small me-2">Críticos &rarr;</a>
+                        <a href="{% url 'reponer' %}" class="small">Reponer todo &rarr;</a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if stock_critico_count %}
+                    <div class="row text-center mb-3">
+                        <div class="col">
+                            <div class="display-6 fw-bold text-danger">{{ stock_agotados_count }}</div>
+                            <div class="small text-muted">Agotados</div>
+                        </div>
+                        <div class="col">
+                            <div class="display-6 fw-bold text-warning">{{ stock_criticos_count }}</div>
+                            <div class="small text-muted">Críticos</div>
+                        </div>
+                        <div class="col">
+                            <div class="display-6 fw-bold text-info">{{ stock_bajos_count }}</div>
+                            <div class="small text-muted">Bajos</div>
+                        </div>
+                    </div>
+
+                    {% if stock_critico %}
+                    <table class="table table-sm mb-0">
+                        <tbody>
+                            {% for prod in stock_critico %}
+                            <tr>
+                                <td>
+                                    <span class="badge bg-{{ prod.nivel_color }} me-1">{{ prod.nivel_label }}</span>
+                                    {{ prod.nombre }}
+                                </td>
+                                <td class="text-end">
+                                    <span class="fw-bold">{{ prod.stock|default_if_none:"0" }}</span>
+                                    <span class="text-muted small">/ {{ prod.stock_minimo }}</span>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    {% endif %}
+                    {% else %}
+                    <div class="text-muted text-center py-3">
+                        Sin productos con stock crítico.
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

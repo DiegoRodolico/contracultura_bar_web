@@ -1,8 +1,50 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import HttpResponse
 from django.utils import timezone
+from django.db.models import Sum, F, Q, Case, When, Value, IntegerField
+from django.contrib import messages
+from datetime import timedelta
 from .models import Clientes, Productos, Mesas, Pedidos, Categorias, DetallePedido
-from .forms import clienteForm, pedidoForm, iniciarPedidoForm, editarDetalleForm
+from .forms import clienteForm, pedidoForm, iniciarPedidoForm, editarDetalleForm, reponerStockForm
+
+
+NIVEL_AGOTADO = 0
+NIVEL_CRITICO = 1
+NIVEL_BAJO = 2
+
+NIVEL_LABELS = {
+    NIVEL_AGOTADO: ('Agotado', 'danger'),
+    NIVEL_CRITICO: ('Crítico', 'warning'),
+    NIVEL_BAJO: ('Bajo', 'info'),
+}
+
+
+def nivel_stock(stock, stock_minimo):
+    if stock is None or stock <= 0:
+        return NIVEL_AGOTADO
+    if stock_minimo and stock <= stock_minimo / 2:
+        return NIVEL_CRITICO
+    return NIVEL_BAJO
+
+
+def productos_con_stock_bajo(solo_activos=True):
+    qs = Productos.objects.all()
+    if solo_activos:
+        qs = qs.filter(activo=True)
+    qs = qs.annotate(
+        diferencia=F('stock_minimo') - F('stock'),
+    ).filter(
+        stock__lte=F('stock_minimo')
+    ).order_by('diferencia', 'nombre')
+
+    for p in qs:
+        p.nivel = nivel_stock(p.stock, p.stock_minimo)
+        p.nivel_label, p.nivel_color = NIVEL_LABELS[p.nivel]
+        try:
+            p.margen = (p.precio or 0) - (p.costo or 0)
+        except TypeError:
+            p.margen = 0
+    return qs
 
 
 def recalcular_total(pedido):
@@ -13,8 +55,138 @@ def recalcular_total(pedido):
     pedido.save()
 
 
-def base(request):
-    return render(request, 'base.html')
+def dashboard(request):
+    hoy = timezone.localdate()
+    inicio_hoy = timezone.make_aware(timezone.datetime.combine(hoy, timezone.datetime.min.time()))
+
+    pedidos_hoy = Pedidos.objects.filter(fecha_creacion__gte=inicio_hoy)
+    pedidos_abiertos = pedidos_hoy.exclude(estado__in=['ENTREGADO', 'CANCELADO'])
+
+    total_facturado_hoy = pedidos_hoy.filter(estado='ENTREGADO').aggregate(
+        s=Sum('total')
+    )['s'] or 0
+
+    stock_critico_qs = productos_con_stock_bajo()
+    stock_critico_count = stock_critico_qs.count()
+    stock_critico_top = list(stock_critico_qs[:5])
+
+    agotados_count = sum(1 for p in stock_critico_qs if p.nivel == NIVEL_AGOTADO)
+    criticos_count = sum(1 for p in stock_critico_qs if p.nivel == NIVEL_CRITICO)
+    bajos_count = sum(1 for p in stock_critico_qs if p.nivel == NIVEL_BAJO)
+
+    mesas_ocupadas = Mesas.objects.filter(estado='OCUPADA')
+    mesas_libres = Mesas.objects.filter(estado='LIBRE').count()
+
+    ultimos_pedidos = Pedidos.objects.all().order_by('-fecha_creacion')[:10]
+
+    context = {
+        'pedidos_abiertos_count': pedidos_abiertos.count(),
+        'total_facturado_hoy': total_facturado_hoy,
+        'stock_critico_count': stock_critico_count,
+        'stock_agotados_count': agotados_count,
+        'stock_criticos_count': criticos_count,
+        'stock_bajos_count': bajos_count,
+        'mesas_ocupadas_count': mesas_ocupadas.count(),
+        'mesas_libres_count': mesas_libres,
+        'stock_critico': stock_critico_top,
+        'ultimos_pedidos': ultimos_pedidos,
+    }
+    return render(request, 'dashboard.html', context)
+
+
+def stock_critico(request):
+    productos = productos_con_stock_bajo()
+    return render(request, 'stock_critico.html', {
+        'productos': productos,
+        'total_productos': productos.count(),
+    })
+
+
+MODO_TODOS = 'todos'
+MODO_CRITICOS = 'criticos'
+
+
+def reponer(request):
+    modo = request.GET.get('modo', MODO_CRITICOS)
+    if modo not in (MODO_CRITICOS, MODO_TODOS):
+        modo = MODO_CRITICOS
+
+    q = (request.GET.get('q') or '').strip()
+    categoria_id = request.GET.get('categoria') or ''
+
+    if modo == MODO_CRITICOS:
+        qs = productos_con_stock_bajo()
+    else:
+        qs = Productos.objects.filter(activo=True).order_by('nombre')
+        for p in qs:
+            p.nivel = nivel_stock(p.stock, p.stock_minimo)
+            p.nivel_label, p.nivel_color = NIVEL_LABELS[p.nivel]
+            try:
+                p.margen = (p.precio or 0) - (p.costo or 0)
+            except TypeError:
+                p.margen = 0
+            p.diferencia = (p.stock_minimo or 0) - (p.stock or 0)
+
+    if q:
+        qs = [p for p in qs if q.lower() in p.nombre.lower()]
+
+    categorias_list = Categorias.objects.all().order_by('nombre')
+    if categoria_id:
+        try:
+            qs = [p for p in qs if p.categoria_id == int(categoria_id)]
+        except (ValueError, TypeError):
+            categoria_id = ''
+
+    total_productos = len(qs) if isinstance(qs, list) else qs.count()
+
+    return render(request, 'reponer.html', {
+        'productos': qs,
+        'total_productos': total_productos,
+        'modo': modo,
+        'q': q,
+        'categoria_id': str(categoria_id),
+        'categorias': categorias_list,
+    })
+
+
+def reponer_stock(request, producto_id):
+    producto = get_object_or_404(Productos, id=producto_id)
+    stock_anterior = producto.stock or 0
+    next_url = request.GET.get('next') or request.POST.get('next') or ''
+
+    if request.method == 'POST':
+        form = reponerStockForm(request.POST)
+        if form.is_valid():
+            cantidad = form.cleaned_data['cantidad']
+            nuevo_minimo = form.cleaned_data.get('nuevo_stock_minimo')
+
+            producto.stock = stock_anterior + cantidad
+            if nuevo_minimo is not None:
+                producto.stock_minimo = nuevo_minimo
+            producto.save()
+
+            messages.success(
+                request,
+                f'Stock de "{producto.nombre}" actualizado: {stock_anterior} → {producto.stock}.'
+            )
+            if next_url:
+                return redirect(next_url)
+            return redirect('stock_critico')
+    else:
+        form = reponerStockForm(initial={'nuevo_stock_minimo': producto.stock_minimo})
+
+    nivel = nivel_stock(producto.stock, producto.stock_minimo)
+    nivel_label, nivel_color = NIVEL_LABELS[nivel]
+
+    return render(request, 'reponer_stock.html', {
+        'producto': producto,
+        'stock_anterior': stock_anterior,
+        'form': form,
+        'nivel': nivel,
+        'nivel_label': nivel_label,
+        'nivel_color': nivel_color,
+        'next_url': next_url,
+    })
 
 
 def cliente(request):
@@ -55,7 +227,7 @@ def pedido(request):
 
 def iniciar_pedido(request):
     formulario_inicial = iniciarPedidoForm(request.POST or None)
-    if formulario_inicial.is_valid():
+    if request.method == 'POST' and formulario_inicial.is_valid():
         pedido_nuevo = formulario_inicial.save()
 
         if pedido_nuevo.mesa:
@@ -63,7 +235,12 @@ def iniciar_pedido(request):
             pedido_nuevo.mesa.save()
 
         return redirect('ticket_pedido', pedido_id=pedido_nuevo.id)
-    return render(request, 'iniciar_pedido.html', {'formulario_inicial': formulario_inicial})
+
+    mesas = Mesas.objects.all().order_by('numero')
+    return render(request, 'iniciar_pedido.html', {
+        'formulario_inicial': formulario_inicial,
+        'mesas': mesas,
+    })
 
 
 def ticket_pedido(request, pedido_id):
