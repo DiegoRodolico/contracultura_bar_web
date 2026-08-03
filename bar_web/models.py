@@ -1,4 +1,3 @@
-# models.py preparado para SQLite - Django gestiona las tablas.
 from django.db import models
 
 
