@@ -242,8 +242,6 @@ def mostrar_mesas(request):
 
 
 def pedido(request):
-    pedidos_activos = Pedidos.objects.filter(estado='ACTIVO').order_by('-fecha_creacion')
-    pedidos_historial = Pedidos.objects.exclude(estado='ACTIVO').order_by('-fecha_cierre', '-fecha_creacion')
     vista = request.GET.get('vista', 'activos')
     if vista not in ('activos', 'historial'):
         vista = 'activos'
@@ -302,8 +300,6 @@ def pedido(request):
         'cerrados_count': cerrados_count,
         'page_obj': page_obj,
         'paginated': paginated,
-        'pedidos_activos': pedidos_activos,
-        'pedidos_historial': pedidos_historial,
     })
 
 
