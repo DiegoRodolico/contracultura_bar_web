@@ -1,7 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import HttpResponse
 from django.utils import timezone
-from django.db.models import Sum, F, Q, Case, When, Value, IntegerField
+from django.db.models import Sum, F, Q, Case, When, Value, IntegerField, Prefetch
 from django.contrib import messages
 from datetime import timedelta
 from .models import Clientes, Productos, Mesas, Pedidos, Categorias, DetallePedido
@@ -413,6 +413,23 @@ def cerrar_pedido(request, pedido_id):
     return redirect('pedido')
 
 
+# def producto(request):
+#     producto = Productos.objects.all()
+#     return render(request, 'producto.html', {'producto': producto})
 def producto(request):
-    producto = Productos.objects.all()
-    return render(request, 'producto.html', {'producto': producto})
+    categorias = Categorias.objects.prefetch_related(
+        Prefetch(
+            'productos_set',
+            queryset=Productos.objects.filter(activo=True).order_by('nombre')
+        )
+    ).order_by('nombre')
+
+    # Productos sin categoría asignada (categoria puede ser null)
+    productos_sin_categoria = Productos.objects.filter(
+        categoria__isnull=True, activo=True
+    ).order_by('nombre')
+
+    return render(request, 'producto.html', {
+        'categorias': categorias,
+        'productos_sin_categoria': productos_sin_categoria,
+    })
