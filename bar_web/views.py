@@ -223,8 +223,65 @@ def mostrar_mesas(request):
 
 
 def pedido(request):
-    pedidos = Pedidos.objects.all()
-    return render(request, 'pedido.html', {'pedidos': pedidos})
+    vista = request.GET.get('vista', 'activos')
+    if vista not in ('activos', 'historial'):
+        vista = 'activos'
+
+    q = (request.GET.get('q') or '').strip()
+    estado = (request.GET.get('estado') or '').strip()
+
+    activos_estados = ['PENDIENTE', 'PREPARANDO', 'LISTO']
+    cerrados_estados = ['ENTREGADO', 'CANCELADO']
+
+    if vista == 'activos':
+        qs = Pedidos.objects.filter(estado__in=activos_estados)
+    else:
+        qs = Pedidos.objects.filter(estado__in=cerrados_estados)
+
+    if estado and estado in (activos_estados + cerrados_estados):
+        qs = qs.filter(estado=estado)
+
+    if q:
+        if q.isdigit():
+            qs = qs.filter(id=int(q))
+        else:
+            qs = qs.filter(
+                Q(cliente__nombre__icontains=q) |
+                Q(mesa__numero__icontains=q)
+            )
+
+    qs = qs.select_related('mesa', 'cliente').order_by('-fecha_creacion')
+
+    activos_count = Pedidos.objects.filter(estado__in=activos_estados).count()
+    cerrados_count = Pedidos.objects.filter(estado__in=cerrados_estados).count()
+
+    page_obj = None
+    paginated = False
+    if vista == 'historial':
+        from django.core.paginator import Paginator
+        paginator = Paginator(qs, 20)
+        page_number = request.GET.get('page') or 1
+        try:
+            page_obj = paginator.page(int(page_number))
+        except Exception:
+            page_obj = paginator.page(1)
+        pedidos = page_obj.object_list
+        paginated = True
+    else:
+        pedidos = list(qs[:100])
+
+    return render(request, 'pedido.html', {
+        'pedidos': pedidos,
+        'vista': vista,
+        'q': q,
+        'estado': estado,
+        'estados_activos': activos_estados,
+        'estados_cerrados': cerrados_estados,
+        'activos_count': activos_count,
+        'cerrados_count': cerrados_count,
+        'page_obj': page_obj,
+        'paginated': paginated,
+    })
 
 
 def _mesas_para_grid():
