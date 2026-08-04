@@ -1,30 +1,83 @@
 {% extends "base.html" %}
 
+{% block title %}Mesas - Contracultura Bar{% endblock %}
+
 {% block header %}Mesas{% endblock %}
 
-{% block extra_css %}{% endblock %}
+{% block extra_css %}
+<style>
+    .mesa-card-static {
+        transition: transform 0.1s ease, box-shadow 0.1s ease;
+        border: 2px solid transparent;
+        user-select: none;
+    }
+    .mesa-card-static:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    .mesa-card-static .mesa-numero {
+        font-size: 1.6rem;
+        font-weight: 700;
+        line-height: 1.1;
+    }
+    .mesa-card-static .mesa-info {
+        font-size: 0.8rem;
+        opacity: 0.85;
+    }
+    .mesa-card-static .mesa-tiempo {
+        font-size: 0.7rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-top: 4px;
+    }
+</style>
+{% endblock %}
 
-{% block extra_js %}{% endblock %}
+{% block content %}
+<div class="container-fluid">
 
-{%block content%}
-Disponibilidad de Mesas:
-    <h1>
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h4 class="mb-0">Disponibilidad de mesas</h4>
+            <small class="text-muted">
+                <span class="badge bg-success">&nbsp;</span> {{ mesas_libres }} libre{{ mesas_libres|pluralize:"s" }}
+                <span class="badge bg-warning text-dark ms-2">&nbsp;</span> {{ mesas_reservadas }} reservada{{ mesas_reservadas|pluralize:"s" }}
+                <span class="badge bg-danger ms-2">&nbsp;</span> {{ mesas_ocupadas }} ocupada{{ mesas_ocupadas|pluralize:"s" }}
+            </small>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{% url 'mostrar_mesas' %}" class="btn btn-outline-secondary btn-sm">
+                Mostrar Mesas
+            </a>
+            <a href="{% url 'iniciar_pedido' %}" class="btn btn-primary btn-sm">
+                + Nuevo pedido
+            </a>
+        </div>
+    </div>
 
-        {% if mesas_libres >= 8 %}
-                💡 Hay buena disponibilidad de mesas
-        {% elif mesas_libres >= 3 %}
-                ⚠️  Disponibilidad media, considerar reservas
-        {% else %}
-                🚨 Poca disponibilidad, sugerir barra o espera
-        {% endif %}
-    </h1>
-    <a
-        name="btn_mostrar_mesas"
-        id="btn_mostrar_mesas"
-        class="btn btn-primary"
-        href="{% url 'mostrar_mesas' %}"
-        role="button"
-        >Mostrar Mesas </a
-    >
-    
+    {% if mesas_libres >= 8 %}
+        <div class="alert alert-success">💡 Hay buena disponibilidad de mesas</div>
+    {% elif mesas_libres >= 3 %}
+        <div class="alert alert-warning">⚠️ Disponibilidad media, considerar reservas</div>
+    {% else %}
+        <div class="alert alert-danger">🚨 Poca disponibilidad, sugerir barra o espera</div>
+    {% endif %}
+
+    {% if mesas %}
+    <div class="card shadow-sm">
+        <div class="card-body">
+            {% include "partials/_mesa_grid.html" %}
+        </div>
+    </div>
+    {% else %}
+    <div class="card shadow-sm">
+        <div class="card-body text-muted text-center py-5">
+            <h5>No hay mesas registradas</h5>
+            <p class="mb-0">Cargá mesas en <a href="/admin/bar_web/mesas/add/">el admin</a>.</p>
+        </div>
+    </div>
+    {% endif %}
+
+</div>
 {% endblock %}

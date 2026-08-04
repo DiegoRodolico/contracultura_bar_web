@@ -1,27 +1,74 @@
 {% extends "base.html" %}
 
+{% block title %}Mostrar Mesas - Contracultura Bar{% endblock %}
+
 {% block header %}Mostrar Mesas{% endblock %}
 
-{% block extra_css %}{% endblock %}
-
-{% block extra_js %}{% endblock %}
+{% block extra_css %}
+<style>
+    .mesa-card-static {
+        transition: transform 0.1s ease, box-shadow 0.1s ease;
+        border: 2px solid transparent;
+        user-select: none;
+    }
+    .mesa-card-static:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    .mesa-card-static .mesa-numero {
+        font-size: 1.6rem;
+        font-weight: 700;
+        line-height: 1.1;
+    }
+    .mesa-card-static .mesa-info {
+        font-size: 0.8rem;
+        opacity: 0.85;
+    }
+    .mesa-card-static .mesa-tiempo {
+        font-size: 0.7rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-top: 4px;
+    }
+</style>
+{% endblock %}
 
 {% block content %}
+<div class="container-fluid">
+
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h4 class="mb-0">Mostrar mesas</h4>
+            <small class="text-muted">
+                <span class="badge bg-success">&nbsp;</span> {{ mesas_libres }} libre{{ mesas_libres|pluralize:"s" }}
+                <span class="badge bg-warning text-dark ms-2">&nbsp;</span> {{ mesas_reservadas }} reservada{{ mesas_reservadas|pluralize:"s" }}
+                <span class="badge bg-danger ms-2">&nbsp;</span> {{ mesas_ocupadas }} ocupada{{ mesas_ocupadas|pluralize:"s" }}
+            </small>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{% url 'mesas' %}" class="btn btn-outline-secondary btn-sm">
+                &larr; Volver a mesas
+            </a>
+            <a href="{% url 'iniciar_pedido' %}" class="btn btn-primary btn-sm">
+                + Nuevo pedido
+            </a>
+        </div>
+    </div>
+
     {% if mesas %}
-        {% for m in mesas %}
-            <div class="card mb-3">
-                <div class="card-body">
-                    <h5 class="card-title">Mesa {{ m.numero }}</h5>
-                    <p>Capacidad: {{ m.capacidad }}</p>
-                    <p>Estado: {{ m.estado }}</p>
-                </div>
-            </div>
-        {% endfor %}
+    <div class="card shadow-sm">
+        <div class="card-body">
+            {% include "partials/_mesa_grid.html" %}
+        </div>
+    </div>
     {% else %}
-        <p>No hay mesas registradas.</p>
+    <div class="card shadow-sm">
+        <div class="card-body text-muted text-center py-5">
+            <h5>No hay mesas registradas</h5>
+        </div>
+    </div>
     {% endif %}
 
-    <div class="mesas_libres_mostrar">
-        Mesas libres: {{ mesas_libres }}
-    </div>
+</div>
 {% endblock %}

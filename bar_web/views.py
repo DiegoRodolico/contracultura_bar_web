@@ -203,26 +203,55 @@ def agregar_cliente(request):
 
 
 def mesas(request):
-    mesas = Mesas.objects.all()
-    mesas_libres = mesas.filter(estado='LIBRE').count()
+    mesas, mesas_libres, mesas_ocupadas, mesas_reservadas = _mesas_para_grid()
     return render(request, 'mesas.html', {
         'mesas': mesas,
-        'mesas_libres': mesas_libres
+        'mesas_libres': mesas_libres,
+        'mesas_ocupadas': mesas_ocupadas,
+        'mesas_reservadas': mesas_reservadas,
     })
 
 
 def mostrar_mesas(request):
-    mesas = Mesas.objects.all()
-    mesas_libres = mesas.filter(estado='LIBRE').count()
+    mesas, mesas_libres, mesas_ocupadas, mesas_reservadas = _mesas_para_grid()
     return render(request, 'mostrar_mesas.html', {
         'mesas': mesas,
         'mesas_libres': mesas_libres,
+        'mesas_ocupadas': mesas_ocupadas,
+        'mesas_reservadas': mesas_reservadas,
     })
 
 
 def pedido(request):
     pedidos = Pedidos.objects.all()
     return render(request, 'pedido.html', {'pedidos': pedidos})
+
+
+def _mesas_para_grid():
+    mesas_qs = Mesas.objects.all().order_by('numero')
+    mesas = []
+    mesas_libres = 0
+    mesas_ocupadas = 0
+    mesas_reservadas = 0
+
+    for mesa in mesas_qs:
+        if mesa.estado == 'OCUPADA':
+            mesas_ocupadas += 1
+        elif mesa.estado == 'RESERVADA':
+            mesas_reservadas += 1
+        else:
+            mesas_libres += 1
+
+        mesas.append({
+            'obj': mesa,
+            'id': mesa.id,
+            'numero': mesa.numero,
+            'estado': mesa.estado,
+            'ubicacion': mesa.get_ubicacion_display(),
+            'capacidad': mesa.capacidad,
+        })
+
+    return mesas, mesas_libres, mesas_ocupadas, mesas_reservadas
 
 
 def iniciar_pedido(request):
@@ -236,10 +265,14 @@ def iniciar_pedido(request):
 
         return redirect('ticket_pedido', pedido_id=pedido_nuevo.id)
 
-    mesas = Mesas.objects.all().order_by('numero')
+    mesas, mesas_libres, mesas_ocupadas, mesas_reservadas = _mesas_para_grid()
+
     return render(request, 'iniciar_pedido.html', {
         'formulario_inicial': formulario_inicial,
         'mesas': mesas,
+        'mesas_libres': mesas_libres,
+        'mesas_ocupadas': mesas_ocupadas,
+        'mesas_reservadas': mesas_reservadas,
     })
 
 

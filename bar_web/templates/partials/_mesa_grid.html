@@ -1,0 +1,27 @@
+{% load static %}
+<div class="row g-2">
+    {% for mesa in mesas %}
+    <div class="col-6 col-sm-4 col-md-3 col-lg-2">
+        {% if mesa.estado == 'LIBRE' %}
+            <div class="card mesa-card-static bg-success text-white text-center p-2 h-100">
+                <div class="mesa-numero">{{ mesa.numero }}</div>
+                <div class="mesa-info">{{ mesa.ubicacion }}</div>
+                <div class="mesa-info">Cap. {{ mesa.capacidad|default:"-" }}</div>
+                <div class="mesa-tiempo">Libre</div>
+            </div>
+        {% elif mesa.estado == 'RESERVADA' %}
+            <div class="card mesa-card-static bg-warning-subtle border-warning text-center p-2 h-100">
+                <div class="mesa-numero text-warning-emphasis">{{ mesa.numero }}</div>
+                <div class="mesa-info text-warning-emphasis">{{ mesa.ubicacion }}</div>
+                <div class="mesa-tiempo text-warning-emphasis">Reservada</div>
+            </div>
+        {% else %}
+            <div class="card mesa-card-static bg-danger-subtle border-danger text-center p-2 h-100">
+                <div class="mesa-numero text-danger-emphasis">{{ mesa.numero }}</div>
+                <div class="mesa-info text-danger-emphasis">{{ mesa.ubicacion }}</div>
+                <div class="mesa-tiempo text-danger-emphasis">Ocupada</div>
+            </div>
+        {% endif %}
+    </div>
+    {% endfor %}
+</div>
