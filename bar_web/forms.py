@@ -6,6 +6,27 @@ class clienteForm(forms.ModelForm):
     class Meta:
         model = Clientes
         fields = ['nombre', 'telefono']
+        widgets = {
+            'nombre': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Ej: Juan Pérez',
+                'autofocus': True,
+            }),
+            'telefono': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Ej: 11 2345-6789',
+            }),
+        }
+        labels = {
+            'nombre': 'Nombre completo',
+            'telefono': 'Teléfono',
+        }
+
+    def clean_nombre(self):
+        nombre = self.cleaned_data['nombre'].strip()
+        if not nombre:
+            raise forms.ValidationError('El nombre no puede estar vacío.')
+        return nombre
 
 
 class iniciarPedidoForm(forms.ModelForm):

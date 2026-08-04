@@ -75,6 +75,10 @@
 
 
 <a href="{% url 'cerrar_pedido' pedido.id %}" class="btn btn-success">Cerrar Pedido</a>
+<a href="{% url 'cancelar_pedido' pedido.id %}" class="btn btn-danger"
+   onclick="return confirm('¿Cancelar el pedido #{{ pedido.id }}? Esta acción no se puede deshacer.');">
+    Cancelar Pedido
+</a>
 <a href="{% url 'pedido' %}" class="btn btn-outline-secondary">Volver a Pedidos</a>
 
 {% endblock %}

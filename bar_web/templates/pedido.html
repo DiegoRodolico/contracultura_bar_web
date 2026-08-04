@@ -3,7 +3,18 @@
 {% block title %}Pedidos - Contracultura Bar{% endblock %}
 
 {% block header %}Pedidos{% endblock %}
-
+{% block extra_css %}
+<style>
+    .badge-estado {
+        font-size: 0.8rem;
+        padding: 5px 10px;
+    }
+    .estado-ACTIVO { background-color: #ffc107; color: #000; }
+    .estado-ENTREGADO { background-color: #198754; color: #fff; }
+    .estado-CANCELADO { background-color: #dc3545; color: #fff; }
+    .pedido-card.historial { opacity: 0.75; }
+</style>
+{% endblock %}
 {% block content %}
 <div class="container-fluid">
 
@@ -119,6 +130,14 @@
                                 <a href="{% url 'ticket_pedido' p.id %}" class="btn btn-sm btn-outline-primary">
                                     Ver
                                 </a>
+                                {% if vista == 'activos' %}
+                                <a href="{% url 'cancelar_pedido' p.id %}"
+                                   class="btn btn-sm btn-outline-danger"
+                                   onclick="return confirm('¿Cancelar el pedido #{{ p.id }}?');">
+                                    Cancelar
+                                </a>
+                                {% endif %}
+                            </td>
                             </td>
                         </tr>
                         {% endfor %}

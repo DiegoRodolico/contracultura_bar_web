@@ -201,6 +201,25 @@ def agregar_cliente(request):
         return redirect('cliente')
     return render(request, 'agregar_cliente.html', {'formulario_cliente': formulario_cliente})
 
+def editar_cliente(request, cliente_id):
+    cliente_actual = get_object_or_404(Clientes, id=cliente_id)
+    formulario_cliente = clienteForm(request.POST or None, instance=cliente_actual)
+    if formulario_cliente.is_valid():
+        formulario_cliente.save()
+        messages.success(request, f'Cliente "{cliente_actual.nombre}" actualizado.')
+        return redirect('cliente')
+    return render(request, 'editar_cliente.html', {
+        'formulario_cliente': formulario_cliente,
+        'cliente': cliente_actual,
+    })
+
+def eliminar_cliente(request, cliente_id):
+    cliente_actual = get_object_or_404(Clientes, id=cliente_id)
+    nombre = cliente_actual.nombre
+    cliente_actual.delete()
+    messages.success(request, f'Cliente "{nombre}" eliminado.')
+    return redirect('cliente')
+
 
 def mesas(request):
     mesas, mesas_libres, mesas_ocupadas, mesas_reservadas = _mesas_para_grid()
@@ -223,6 +242,8 @@ def mostrar_mesas(request):
 
 
 def pedido(request):
+    pedidos_activos = Pedidos.objects.filter(estado='ACTIVO').order_by('-fecha_creacion')
+    pedidos_historial = Pedidos.objects.exclude(estado='ACTIVO').order_by('-fecha_cierre', '-fecha_creacion')
     vista = request.GET.get('vista', 'activos')
     if vista not in ('activos', 'historial'):
         vista = 'activos'
@@ -281,6 +302,8 @@ def pedido(request):
         'cerrados_count': cerrados_count,
         'page_obj': page_obj,
         'paginated': paginated,
+        'pedidos_activos': pedidos_activos,
+        'pedidos_historial': pedidos_historial,
     })
 
 
@@ -412,10 +435,26 @@ def cerrar_pedido(request, pedido_id):
 
     return redirect('pedido')
 
+def cancelar_pedido(request, pedido_id):
+    pedido_actual = get_object_or_404(Pedidos, id=pedido_id)
 
-# def producto(request):
-#     producto = Productos.objects.all()
-#     return render(request, 'producto.html', {'producto': producto})
+    for detalle in pedido_actual.detallepedido_set.all():
+        producto = detalle.producto
+        if producto:
+            producto.stock = (producto.stock or 0) + detalle.cantidad
+            producto.save()
+
+    pedido_actual.fecha_cierre = timezone.now()
+    pedido_actual.estado = 'CANCELADO'
+    pedido_actual.save()
+
+    if pedido_actual.mesa:
+        pedido_actual.mesa.estado = 'LIBRE'
+        pedido_actual.mesa.save()
+
+    messages.info(request, f'Pedido #{pedido_actual.id} cancelado y stock repuesto.')
+    return redirect('pedido')
+
 def producto(request):
     categorias = Categorias.objects.prefetch_related(
         Prefetch(
@@ -433,3 +472,4 @@ def producto(request):
         'categorias': categorias,
         'productos_sin_categoria': productos_sin_categoria,
     })
+
